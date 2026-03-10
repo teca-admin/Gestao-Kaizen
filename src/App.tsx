@@ -5,6 +5,8 @@ import {
   ListTodo, 
   Trello, 
   Camera, 
+  Eye,
+  EyeOff,
   LogOut, 
   ChevronRight, 
   Clock, 
@@ -44,6 +46,7 @@ export default function App() {
   // Login State
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -83,11 +86,11 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6 font-sans">
+      <div className="fixed inset-0 bg-neutral-50 flex items-center justify-center p-6 font-sans overflow-hidden">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-black/5 p-8 border border-black/5"
+          className="w-full max-w-md"
         >
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-black/20">
@@ -110,13 +113,22 @@ export default function App() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1.5 ml-1">Senha</label>
-              <input 
-                type="password" 
-                value={loginForm.password}
-                onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
-                className="w-full px-4 py-3 bg-neutral-100 border-none rounded-xl focus:ring-2 focus:ring-black transition-all outline-none"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                  className="w-full px-4 py-3 bg-neutral-100 border-none rounded-xl focus:ring-2 focus:ring-black transition-all outline-none"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
             {loginError && <p className="text-red-500 text-xs font-medium text-center">{loginError}</p>}
             <button 
