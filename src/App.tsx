@@ -777,82 +777,137 @@ function DetailsModal({ event, onClose }: { event: InfrastructureEvent, onClose:
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:p-6"
+      className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-0 sm:p-4 md:p-6"
       onClick={onClose}
     >
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="bg-neutral-50 w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-3xl sm:rounded-[32px] overflow-hidden shadow-2xl flex flex-col relative"
         onClick={e => e.stopPropagation()}
       >
+        {/* Mobile Handle */}
+        <div className="sm:hidden flex justify-center py-3 bg-white">
+          <div className="w-12 h-1.5 bg-neutral-200 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-white sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono font-bold text-neutral-400 bg-neutral-50 px-2 py-1 rounded border border-neutral-100">{event.code}</span>
-            <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Detalhes da Ocorrência</h3>
+        <div className="px-6 py-5 border-b border-neutral-100 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white shrink-0">
+              <FileText size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold text-neutral-400 tracking-wider">{event.code}</span>
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${STATUS_COLORS[event.status as keyof typeof STATUS_COLORS]}`}>
+                  {event.status}
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-neutral-900 leading-tight">Detalhes da Ocorrência</h3>
+            </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-neutral-100 rounded-full transition-colors text-neutral-400"
+            className="p-2.5 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors text-neutral-500"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
-          {/* Main Info */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className={`text-xs font-bold px-3 py-1 rounded-full border ${STATUS_COLORS[event.status as keyof typeof STATUS_COLORS]}`}>
-                {event.status}
-              </span>
-              <span className="text-xs text-neutral-400 font-medium">{event.date} • {event.shift}</span>
-            </div>
-            <h2 className="text-2xl font-bold text-neutral-900 leading-tight">{event.name}</h2>
-            <p className="text-neutral-600 text-sm leading-relaxed whitespace-pre-wrap">{event.description}</p>
-          </div>
-
-          {/* Photo */}
-          {event.photo && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Evidência Fotográfica</label>
-              <div className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm">
-                <img src={event.photo} alt="Evidência" className="w-full h-auto object-cover" referrerPolicy="no-referrer" />
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-white">
+          {/* Hero Section with Photo */}
+          {event.photo ? (
+            <div className="relative aspect-video sm:aspect-[21/9] w-full bg-neutral-900 group">
+              <img 
+                src={event.photo} 
+                alt="Evidência" 
+                className="w-full h-full object-cover opacity-90" 
+                referrerPolicy="no-referrer" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-4 left-6 right-6">
+                <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">Evidência Fotográfica</p>
+                <h4 className="text-white text-lg font-bold truncate">{event.name}</h4>
               </div>
+            </div>
+          ) : (
+            <div className="px-6 py-8 bg-neutral-900 text-white">
+              <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-1">Ocorrência</p>
+              <h4 className="text-white text-2xl font-bold leading-tight">{event.name}</h4>
             </div>
           )}
 
-          {/* Details Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
-              <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Setor</p>
-              <p className="text-sm font-bold text-neutral-900">{event.sector}</p>
+          <div className="p-6 space-y-8">
+            {/* Description */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-black rounded-full" />
+                <h5 className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Descrição do Evento</h5>
+              </div>
+              <div className="bg-neutral-50 p-5 rounded-2xl border border-neutral-100">
+                <p className="text-neutral-700 text-sm leading-relaxed whitespace-pre-wrap font-medium">{event.description}</p>
+              </div>
             </div>
-            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
-              <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Líder</p>
-              <p className="text-sm font-bold text-neutral-900">{event.leader}</p>
-            </div>
-            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
-              <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Supervisor</p>
-              <p className="text-sm font-bold text-neutral-900">{event.supervisor || 'N/A'}</p>
-            </div>
-            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
-              <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">OS Vinci</p>
-              <p className="text-sm font-bold text-neutral-900">{event.os_vinci || 'N/A'}</p>
+
+            {/* Info Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center gap-4 p-4 bg-white border border-neutral-100 rounded-2xl shadow-sm">
+                <div className="w-10 h-10 bg-neutral-50 rounded-xl flex items-center justify-center text-neutral-400">
+                  <MapPin size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Setor</p>
+                  <p className="text-sm font-bold text-neutral-900">{event.sector}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-4 bg-white border border-neutral-100 rounded-2xl shadow-sm">
+                <div className="w-10 h-10 bg-neutral-50 rounded-xl flex items-center justify-center text-neutral-400">
+                  <UserIcon size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Líder</p>
+                  <p className="text-sm font-bold text-neutral-900">{event.leader}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-4 bg-white border border-neutral-100 rounded-2xl shadow-sm">
+                <div className="w-10 h-10 bg-neutral-50 rounded-xl flex items-center justify-center text-neutral-400">
+                  <Timer size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Turno / Data</p>
+                  <p className="text-sm font-bold text-neutral-900">{event.shift} • {event.date}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-4 bg-white border border-neutral-100 rounded-2xl shadow-sm">
+                <div className="w-10 h-10 bg-neutral-50 rounded-xl flex items-center justify-center text-neutral-400">
+                  <FileText size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">OS Vinci / Sup.</p>
+                  <p className="text-sm font-bold text-neutral-900">{event.os_vinci || 'N/A'} • {event.supervisor || 'N/A'}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-neutral-100 bg-neutral-50/50 flex justify-end">
+        <div className="p-6 border-t border-neutral-100 bg-white flex gap-3">
           <button 
             onClick={onClose}
-            className="px-6 py-2.5 bg-black text-white text-sm font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-black/10"
+            className="flex-1 py-4 bg-neutral-100 text-neutral-600 text-sm font-bold rounded-2xl active:scale-[0.98] transition-all"
           >
-            Fechar
+            Voltar
+          </button>
+          <button 
+            onClick={onClose}
+            className="flex-[2] py-4 bg-black text-white text-sm font-bold rounded-2xl active:scale-[0.98] transition-all shadow-lg shadow-black/20"
+          >
+            Entendido
           </button>
         </div>
       </motion.div>
