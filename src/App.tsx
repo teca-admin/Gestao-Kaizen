@@ -311,7 +311,8 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => vo
               type="text" 
               value={form.name}
               onChange={e => setForm({...form, name: e.target.value})}
-              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all"
+              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all text-[14px]"
+              style={{ fontFamily: 'Arial' }}
               placeholder="Ex: Portão da expedição quebrado"
             />
           </div>
@@ -323,7 +324,8 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => vo
               rows={4}
               value={form.description}
               onChange={e => setForm({...form, description: e.target.value})}
-              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all resize-none text-[14px] font-normal"
+              style={{ fontFamily: 'Arial' }}
               placeholder="Descreva o ocorrido com detalhes..."
             />
           </div>
@@ -335,7 +337,8 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => vo
             <select 
               value={form.sector}
               onChange={e => setForm({...form, sector: e.target.value as Sector})}
-              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all appearance-none"
+              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all appearance-none text-[14px]"
+              style={{ fontFamily: 'Arial' }}
             >
               {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -347,7 +350,8 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => vo
               type="text" 
               value={form.supervisor}
               onChange={e => setForm({...form, supervisor: e.target.value})}
-              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all"
+              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all text-[14px]"
+              style={{ fontFamily: 'Arial' }}
               placeholder="Nome do Sup."
             />
           </div>
@@ -358,7 +362,8 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => vo
               type="text" 
               value={form.os_vinci}
               onChange={e => setForm({...form, os_vinci: e.target.value})}
-              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all"
+              className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all text-[14px]"
+              style={{ fontFamily: 'Arial' }}
               placeholder="Número da OS Vinci"
             />
           </div>
@@ -400,7 +405,8 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => vo
           <button 
             type="submit"
             disabled={submitting}
-            className="w-full max-w-md mx-auto bg-black text-white font-bold py-4 rounded-xl shadow-lg shadow-black/20 active:scale-[0.98] transition-transform disabled:opacity-50 flex items-center justify-center"
+            className="mx-auto bg-black text-white font-bold py-4 rounded-xl shadow-lg shadow-black/20 active:scale-[0.98] transition-transform disabled:opacity-50 flex items-center justify-center"
+            style={{ width: '305.5px' }}
           >
             {submitting ? 'Enviando...' : 'Registrar Ocorrência'}
           </button>
