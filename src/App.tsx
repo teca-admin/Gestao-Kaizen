@@ -185,7 +185,7 @@ export default function App() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto pb-24 max-w-7xl mx-auto w-full">
+      <main className="flex-1 overflow-y-auto no-scrollbar pb-24 max-w-7xl mx-auto w-full">
         <AnimatePresence mode="wait">
           {activeTab === 'register' ? (
             <RegistrationForm 
@@ -297,20 +297,35 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => vo
       className="p-6 space-y-6"
     >
       <div 
-        className="bg-black text-white border border-white/20 rounded-none grid grid-cols-3 gap-2 shadow-lg shadow-black/10"
-        style={{ height: '46.5px', width: '310px', paddingLeft: '20px', paddingTop: '7px' }}
+        className="bg-white border border-neutral-200 rounded-2xl grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-neutral-100 shadow-sm overflow-hidden"
+        style={{ width: '100%', maxWidth: '500px' }}
       >
-        <div className="border-r border-white/10 pr-2">
-          <p className="text-[9px] uppercase font-bold tracking-widest opacity-60">OSK</p>
-          <p className="font-sans font-bold leading-[16px] text-[12px] truncate">{autoFields.code}</p>
+        <div className="px-4 py-3 flex items-center space-x-3">
+          <div className="p-2 bg-neutral-50 rounded-lg shrink-0">
+            <FileText size={14} className="text-neutral-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Código OSK</p>
+            <p className="font-mono font-bold text-black text-sm leading-tight truncate">{autoFields.code}</p>
+          </div>
         </div>
-        <div className="border-r border-white/10 px-2">
-          <p className="text-[9px] uppercase font-bold tracking-widest opacity-60">Turno</p>
-          <p className="font-sans text-[12px] truncate">{autoFields.shift}</p>
+        <div className="px-4 py-3 flex items-center space-x-3">
+          <div className="p-2 bg-neutral-50 rounded-lg shrink-0">
+            <Timer size={14} className="text-neutral-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Turno</p>
+            <p className="font-sans font-semibold text-neutral-700 text-sm leading-tight truncate">{autoFields.shift}</p>
+          </div>
         </div>
-        <div className="pl-2">
-          <p className="text-[9px] uppercase font-bold tracking-widest opacity-60">Data</p>
-          <p className="font-sans text-[12px] truncate">{autoFields.date}</p>
+        <div className="px-4 py-3 flex items-center space-x-3">
+          <div className="p-2 bg-neutral-50 rounded-lg shrink-0">
+            <Clock size={14} className="text-neutral-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Data</p>
+            <p className="font-sans font-semibold text-neutral-700 text-sm leading-tight truncate">{autoFields.date}</p>
+          </div>
         </div>
       </div>
 
