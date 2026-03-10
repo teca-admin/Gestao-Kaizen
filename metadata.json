@@ -1,0 +1,7 @@
+{
+  "name": "Gestão Kaizen",
+  "description": "Sistema mobile para registro e acompanhamento de eventos e não conformidades de infraestrutura.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
