@@ -16,7 +16,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Timer,
-  Search
+  Search,
+  X,
+  Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InfrastructureEvent, User, Sector } from './types';
@@ -38,10 +40,11 @@ const STATUS_COLORS = {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'register' | 'track'>('register');
-  const [trackView, setTrackView] = useState<'table' | 'kanban'>('table');
+  const [trackView, setTrackView] = useState<'list' | 'kanban' | 'table'>('list');
   const [events, setEvents] = useState<InfrastructureEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState<InfrastructureEvent | null>(null);
 
   // Login State
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -211,6 +214,16 @@ export default function App() {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               onUpdateStatus={handleUpdateStatus}
+              onViewDetails={setSelectedEvent}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {selectedEvent && (
+            <DetailsModal 
+              event={selectedEvent} 
+              onClose={() => setSelectedEvent(null)} 
             />
           )}
         </AnimatePresence>
@@ -220,15 +233,18 @@ export default function App() {
 }
 
 function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: (event: InfrastructureEvent) => void }) {
-  const [form, setForm] = useState({
+  const initialForm = {
     name: '',
     description: '',
     sector: SECTORS[0],
     supervisor: '',
     os_vinci: '',
     photo: ''
-  });
+  };
+
+  const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-calculated fields
@@ -238,7 +254,7 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: (event: 
     shift: ''
   });
 
-  useEffect(() => {
+  const generateAutoFields = () => {
     // Get current time in Manaus (UTC-4)
     const now = new Date();
     const manausTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Manaus" }));
@@ -258,6 +274,10 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: (event: 
       date: dateStr,
       shift: shift
     });
+  };
+
+  useEffect(() => {
+    generateAutoFields();
   }, []);
 
   const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -284,13 +304,42 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: (event: 
         leader: user.name,
         status: 'Pendente'
       };
-      onSuccess(newEvent);
+      
+      // Visual feedback
+      setShowSuccess(true);
+      
+      // Clear form
+      setForm(initialForm);
+      generateAutoFields();
+
+      // Delay to show success before switching or just let the user see it
+      setTimeout(() => {
+        setShowSuccess(false);
+        onSuccess(newEvent);
+      }, 1500);
+      
     } catch (err) {
       console.error(err);
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (showSuccess) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center justify-center py-20 space-y-4"
+      >
+        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+          <CheckCircle2 size={40} />
+        </div>
+        <h3 className="text-xl font-bold text-neutral-900">Registrado com Sucesso!</h3>
+        <p className="text-neutral-500">A ocorrência foi salva localmente.</p>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div 
@@ -452,14 +501,16 @@ function TrackingView({
   setView, 
   searchTerm, 
   setSearchTerm,
-  onUpdateStatus
+  onUpdateStatus,
+  onViewDetails
 }: { 
   events: InfrastructureEvent[], 
-  view: 'table' | 'kanban', 
-  setView: (v: 'table' | 'kanban') => void,
+  view: 'list' | 'kanban' | 'table', 
+  setView: (v: 'list' | 'kanban' | 'table') => void,
   searchTerm: string,
   setSearchTerm: (s: string) => void,
-  onUpdateStatus: (id: number, status: string) => void
+  onUpdateStatus: (id: number, status: string) => void,
+  onViewDetails: (event: InfrastructureEvent) => void
 }) {
   const filteredEvents = events.filter(e => 
     e.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -490,13 +541,20 @@ function TrackingView({
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-black transition-all"
           />
         </div>
-        <div className="flex bg-neutral-100 p-1 rounded-lg w-full md:w-auto md:min-w-[240px]">
+        <div className="flex bg-neutral-100 p-1 rounded-lg w-full md:w-auto md:min-w-[320px]">
+          <button 
+            onClick={() => setView('list')}
+            className={`flex-1 flex items-center justify-center py-1.5 rounded-md text-xs font-bold transition-all ${view === 'list' ? 'bg-white text-black shadow-sm' : 'text-neutral-500'}`}
+          >
+            <ListTodo size={14} className="mr-1.5" />
+            Cards
+          </button>
           <button 
             onClick={() => setView('table')}
             className={`flex-1 flex items-center justify-center py-1.5 rounded-md text-xs font-bold transition-all ${view === 'table' ? 'bg-white text-black shadow-sm' : 'text-neutral-500'}`}
           >
-            <ListTodo size={14} className="mr-1.5" />
-            Lista
+            <LayoutDashboard size={14} className="mr-1.5" />
+            Tabela
           </button>
           <button 
             onClick={() => setView('kanban')}
@@ -508,7 +566,7 @@ function TrackingView({
         </div>
       </div>
 
-      {view === 'table' ? (
+      {view === 'list' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEvents.map(event => (
             <div key={event.id} className="bg-white p-4 rounded-2xl border border-neutral-100 shadow-sm space-y-3 flex flex-col justify-between">
@@ -560,12 +618,89 @@ function TrackingView({
                     Concluir
                   </button>
                 )}
-                <button className="flex-1 bg-neutral-50 text-neutral-600 text-[10px] font-bold py-2 rounded-lg border border-neutral-100 active:scale-95 transition-transform">
+                <button 
+                  onClick={() => onViewDetails(event)}
+                  className="flex-1 bg-neutral-50 text-neutral-600 text-[10px] font-bold py-2 rounded-lg border border-neutral-100 active:scale-95 transition-transform"
+                >
                   Ver Detalhes
                 </button>
               </div>
             </div>
           ))}
+        </div>
+      ) : view === 'table' ? (
+        <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-neutral-50 border-bottom border-neutral-200">
+                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Código</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Ocorrência</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Setor</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Líder</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Data</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {filteredEvents.map(event => (
+                  <tr key={event.id} className="hover:bg-neutral-50/50 transition-colors">
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] font-mono font-bold text-neutral-400 bg-neutral-50 px-1.5 py-0.5 rounded border border-neutral-100">{event.code}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs font-bold text-neutral-900">{event.name}</p>
+                      <p className="text-[10px] text-neutral-500 truncate max-w-[200px]">{event.description}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] font-medium text-neutral-600">{event.sector}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] font-medium text-neutral-600">{event.leader}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] font-medium text-neutral-600">{event.date}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${STATUS_COLORS[event.status]}`}>
+                        {event.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-2">
+                        {event.status === 'Pendente' && (
+                          <button 
+                            onClick={() => updateStatus(event.id!, 'Em Andamento')}
+                            className="p-1.5 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors"
+                            title="Iniciar"
+                          >
+                            <Timer size={12} />
+                          </button>
+                        )}
+                        {event.status === 'Em Andamento' && (
+                          <button 
+                            onClick={() => updateStatus(event.id!, 'Concluído')}
+                            className="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-colors"
+                            title="Concluir"
+                          >
+                            <CheckCircle2 size={12} />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => onViewDetails(event)}
+                          className="p-1.5 bg-neutral-50 text-neutral-600 rounded-lg border border-neutral-100 hover:bg-neutral-100 transition-colors"
+                          title="Ver Detalhes"
+                        >
+                          <Eye size={12} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -598,16 +733,23 @@ function TrackingView({
                         <h5 className="text-xs font-bold text-neutral-900 line-clamp-1">{event.name}</h5>
                         <p className="text-[10px] text-neutral-500 line-clamp-2 leading-relaxed">{event.description}</p>
                         <div className="flex items-center justify-between pt-2">
-                          <span className="text-[9px] font-bold text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded">{event.sector}</span>
-                          <button 
-                            onClick={() => {
-                              if (event.status === 'Pendente') updateStatus(event.id!, 'Em Andamento');
-                              else if (event.status === 'Em Andamento') updateStatus(event.id!, 'Concluído');
-                            }}
-                            className="p-1.5 bg-neutral-900 text-white rounded-lg active:scale-90 transition-transform"
-                          >
-                            <ChevronRight size={12} />
-                          </button>
+                          <div className="flex gap-1">
+                            <button 
+                              onClick={() => onViewDetails(event)}
+                              className="p-1.5 bg-neutral-100 text-neutral-600 rounded-lg active:scale-90 transition-transform"
+                            >
+                              <Maximize2 size={12} />
+                            </button>
+                            <button 
+                              onClick={() => {
+                                if (event.status === 'Pendente') updateStatus(event.id!, 'Em Andamento');
+                                else if (event.status === 'Em Andamento') updateStatus(event.id!, 'Concluído');
+                              }}
+                              className="p-1.5 bg-neutral-900 text-white rounded-lg active:scale-90 transition-transform"
+                            >
+                              <ChevronRight size={12} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -625,6 +767,95 @@ function TrackingView({
           <p className="text-sm font-medium">Nenhum registro encontrado</p>
         </div>
       )}
+    </motion.div>
+  );
+}
+
+function DetailsModal({ event, onClose }: { event: InfrastructureEvent, onClose: () => void }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:p-6"
+      onClick={onClose}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-white sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-mono font-bold text-neutral-400 bg-neutral-50 px-2 py-1 rounded border border-neutral-100">{event.code}</span>
+            <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Detalhes da Ocorrência</h3>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-neutral-100 rounded-full transition-colors text-neutral-400"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
+          {/* Main Info */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className={`text-xs font-bold px-3 py-1 rounded-full border ${STATUS_COLORS[event.status as keyof typeof STATUS_COLORS]}`}>
+                {event.status}
+              </span>
+              <span className="text-xs text-neutral-400 font-medium">{event.date} • {event.shift}</span>
+            </div>
+            <h2 className="text-2xl font-bold text-neutral-900 leading-tight">{event.name}</h2>
+            <p className="text-neutral-600 text-sm leading-relaxed whitespace-pre-wrap">{event.description}</p>
+          </div>
+
+          {/* Photo */}
+          {event.photo && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Evidência Fotográfica</label>
+              <div className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm">
+                <img src={event.photo} alt="Evidência" className="w-full h-auto object-cover" referrerPolicy="no-referrer" />
+              </div>
+            </div>
+          )}
+
+          {/* Details Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
+              <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Setor</p>
+              <p className="text-sm font-bold text-neutral-900">{event.sector}</p>
+            </div>
+            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
+              <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Líder</p>
+              <p className="text-sm font-bold text-neutral-900">{event.leader}</p>
+            </div>
+            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
+              <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Supervisor</p>
+              <p className="text-sm font-bold text-neutral-900">{event.supervisor || 'N/A'}</p>
+            </div>
+            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100">
+              <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1">OS Vinci</p>
+              <p className="text-sm font-bold text-neutral-900">{event.os_vinci || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-neutral-100 bg-neutral-50/50 flex justify-end">
+          <button 
+            onClick={onClose}
+            className="px-6 py-2.5 bg-black text-white text-sm font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-black/10"
+          >
+            Fechar
+          </button>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
