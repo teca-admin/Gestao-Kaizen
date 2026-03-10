@@ -48,40 +48,48 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Load data from localStorage on mount
   useEffect(() => {
-    if (user) {
-      fetchEvents();
-    }
-  }, [user]);
+    const savedUser = localStorage.getItem('kaizen_user');
+    if (savedUser) setUser(JSON.parse(savedUser));
 
-  const fetchEvents = async () => {
-    try {
-      const res = await fetch('/api/events');
-      const data = await res.json();
-      setEvents(data);
-    } catch (err) {
-      console.error('Error fetching events:', err);
+    const savedEvents = localStorage.getItem('kaizen_events');
+    if (savedEvents) {
+      setEvents(JSON.parse(savedEvents));
     }
-  };
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginForm)
-      });
-      const data = await res.json();
-      if (data.success) {
-        setUser(data.user);
-      } else {
-        setLoginError(data.message);
-      }
-    } catch (err) {
-      setLoginError('Erro ao conectar ao servidor');
+    
+    // Client-side validation for Vercel compatibility
+    if (loginForm.username === "admin" && loginForm.password === "admin") {
+      const userData = { name: "Admin Líder", role: "leader" };
+      setUser(userData);
+      localStorage.setItem('kaizen_user', JSON.stringify(userData));
+    } else {
+      setLoginError("Credenciais inválidas");
     }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('kaizen_user');
+  };
+
+  const handleRegisterEvent = (eventData: InfrastructureEvent) => {
+    const newEvents = [eventData, ...events];
+    setEvents(newEvents);
+    localStorage.setItem('kaizen_events', JSON.stringify(newEvents));
+  };
+
+  const handleUpdateStatus = (id: number, status: string) => {
+    const newEvents = events.map(e => 
+      e.id === id ? { ...e, status: status as any } : e
+    );
+    setEvents(newEvents);
+    localStorage.setItem('kaizen_events', JSON.stringify(newEvents));
   };
 
   if (!user) {
@@ -157,7 +165,7 @@ export default function App() {
               </div>
             </div>
             <button 
-              onClick={() => setUser(null)}
+              onClick={handleLogout}
               className="p-2 bg-neutral-100 rounded-full text-neutral-500 active:bg-neutral-200 transition-colors"
             >
               <LogOut size={18} />
@@ -190,9 +198,9 @@ export default function App() {
           {activeTab === 'register' ? (
             <RegistrationForm 
               user={user} 
-              onSuccess={() => {
+              onSuccess={(newEvent) => {
+                handleRegisterEvent(newEvent);
                 setActiveTab('track');
-                fetchEvents();
               }} 
             />
           ) : (
@@ -202,7 +210,7 @@ export default function App() {
               setView={setTrackView}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
-              onUpdateStatus={fetchEvents}
+              onUpdateStatus={handleUpdateStatus}
             />
           )}
         </AnimatePresence>
@@ -211,7 +219,7 @@ export default function App() {
   );
 }
 
-function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => void }) {
+function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: (event: InfrastructureEvent) => void }) {
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -269,19 +277,14 @@ function RegistrationForm({ user, onSuccess }: { user: User, onSuccess: () => vo
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          ...autoFields,
-          leader: user.name,
-          status: 'Pendente'
-        })
-      });
-      if (res.ok) {
-        onSuccess();
-      }
+      const newEvent: InfrastructureEvent = {
+        id: Date.now(),
+        ...form,
+        ...autoFields,
+        leader: user.name,
+        status: 'Pendente'
+      };
+      onSuccess(newEvent);
     } catch (err) {
       console.error(err);
     } finally {
@@ -456,7 +459,7 @@ function TrackingView({
   setView: (v: 'table' | 'kanban') => void,
   searchTerm: string,
   setSearchTerm: (s: string) => void,
-  onUpdateStatus: () => void
+  onUpdateStatus: (id: number, status: string) => void
 }) {
   const filteredEvents = events.filter(e => 
     e.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -464,13 +467,8 @@ function TrackingView({
     e.sector.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const updateStatus = async (id: number, status: string) => {
-    await fetch(`/api/events/${id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
-    });
-    onUpdateStatus();
+  const updateStatus = (id: number, status: string) => {
+    onUpdateStatus(id, status);
   };
 
   return (
